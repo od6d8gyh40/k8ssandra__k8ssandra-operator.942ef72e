@@ -19,7 +19,7 @@ func NewService(key types.NamespacedName, reaper *api.Reaper) *corev1.Service {
 
 	var serviceLabels, serviceAnnotations map[string]string
 	if meta := reaper.Spec.ResourceMeta; meta != nil {
-		serviceLabels = utils.MergeMap(meta.Service.Labels, commonLabels)
+		serviceLabels = utils.MergeMap(commonLabels, meta.Service.Labels)
 		serviceAnnotations = meta.Service.Annotations
 	}
 
@@ -41,7 +41,7 @@ func NewService(key types.NamespacedName, reaper *api.Reaper) *corev1.Service {
 					StrVal: "app",
 				},
 			}, {
-				Port:     8080,
+				Port:     8081,
 				Name:     "admin",
 				Protocol: corev1.ProtocolTCP,
 				TargetPort: intstr.IntOrString{
@@ -49,7 +49,7 @@ func NewService(key types.NamespacedName, reaper *api.Reaper) *corev1.Service {
 					StrVal: "admin",
 				},
 			}},
-			Selector: commonLabels,
+			Selector: getConstantLabels(reaper),
 		},
 	}
 	annotations.AddHashAnnotation(service)
