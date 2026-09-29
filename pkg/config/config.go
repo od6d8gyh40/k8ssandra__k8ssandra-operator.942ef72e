@@ -62,7 +62,7 @@ func InitConfig() *ReconcilerConfig {
 		if strings.Contains(val, ",") {
 			secrets := strings.Split(val, ",")
 			for _, s := range secrets {
-				images.DefaultPullSecretOverride = []corev1.LocalObjectReference{{Name: s}}
+				images.DefaultPullSecretOverride = append(images.DefaultPullSecretOverride, corev1.LocalObjectReference{Name: s})
 			}
 		} else {
 			images.DefaultPullSecretOverride = append(images.DefaultPullSecretOverride, corev1.LocalObjectReference{Name: val})
@@ -70,7 +70,7 @@ func InitConfig() *ReconcilerConfig {
 	}
 
 	return &ReconcilerConfig{
-		DefaultDelay: longDelay,
-		LongDelay:    defaultDelay,
+		DefaultDelay: defaultDelay,
+		LongDelay:    longDelay,
 	}
 }
