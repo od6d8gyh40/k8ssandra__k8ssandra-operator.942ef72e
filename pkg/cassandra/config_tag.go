@@ -92,9 +92,9 @@ func parsePath(tag *cassConfigTag, part string) error {
 	var segmentsPart string
 	pathParts := strings.Split(part, ":")
 	if len(pathParts) == 1 {
-		constraints["cassandra"] = "*"
+		constraints["*"] = "*"
 		segmentsPart = pathParts[0]
-	} else if len(pathParts) >= 2 {
+	} else if len(pathParts) == 2 {
 		typeAndConstraintsParts := strings.Split(pathParts[0], ",")
 		for _, typeAndConstraintPart := range typeAndConstraintsParts {
 			typeAndConstraint := strings.Split(typeAndConstraintPart, "@")
@@ -103,7 +103,7 @@ func parsePath(tag *cassConfigTag, part string) error {
 				serverType = "cassandra"
 				constraintStr = strings.TrimSpace(typeAndConstraint[0])
 			} else if len(typeAndConstraint) == 2 {
-				serverType = strings.TrimSpace(typeAndConstraint[0])
+				serverType = strings.ToLower(strings.TrimSpace(typeAndConstraint[0]))
 				constraintStr = strings.TrimSpace(typeAndConstraint[1])
 			} else {
 				return fmt.Errorf("wrong type and constraint: '%v'", typeAndConstraintPart)
@@ -127,11 +127,11 @@ func parsePath(tag *cassConfigTag, part string) error {
 		if err != nil {
 			return err
 		}
+		path.constraint = constr
 		if tag.paths[serverType] == nil {
 			tag.paths[serverType] = []cassConfigTagPath{}
 		}
 		tag.paths[serverType] = append(tag.paths[serverType], path)
-		path.constraint = constr
 	}
 	return nil
 }
